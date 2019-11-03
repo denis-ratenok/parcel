@@ -21,6 +21,8 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         URIBuilder b = new URIBuilder(Main.ABOUTYOU_API);
+        // added `siblings,siblings.attributes:key(brand|name|colorDetail),siblings.priceRange`
+        // to standard request for taking all products with siblings for one request
         b.addParameter("with", "attributes:key(brand|name|colorDetail),priceRange,siblings,siblings.attributes:key(brand|name|colorDetail),siblings.priceRange");
         b.addParameter("filters[category]", "20290");
         b.addParameter("sortDir", "desc");
@@ -80,6 +82,7 @@ public class Main {
             for (Object j : colorsValues) {
                 color = color.concat(new JSONObject(j.toString()).getString("label") + " ");
             }
+            color = color.substring(0, color.length() - 1);
         } catch (JSONException e) {
             color = colorDetail.getJSONObject("values").getString("label");
         }
@@ -89,12 +92,15 @@ public class Main {
             price = "-1";
         } else if (entity.getJSONObject("priceRange").getJSONObject("min").getInt("withTax")
                 != entity.getJSONObject("priceRange").getJSONObject("max").getInt("withTax")) {
-            price = "from: " + entity.getJSONObject("priceRange").getJSONObject("min").getInt("withTax") + " "
-                    + entity.getJSONObject("priceRange").getJSONObject("min").getString("currencyCode");
+            price = "from: " + entity.getJSONObject("priceRange").getJSONObject("min").getInt("withTax");
         } else {
-            price = entity.getJSONObject("priceRange").getJSONObject("min").getInt("withTax") + " "
-                    + entity.getJSONObject("priceRange").getJSONObject("min").getString("currencyCode");
+            price = entity.getJSONObject("priceRange").getJSONObject("min").getInt("withTax") + "";
         }
+
+        StringBuilder s = new StringBuilder(price);
+        s.insert(s.length() - 2, ","); // example: 1790 to 17,90
+        price = s.toString();
+        price = price.concat(" " + entity.getJSONObject("priceRange").getJSONObject("min").getString("currencyCode"));
 
         return new Product(id, productName, brandName, color, price);
     }
